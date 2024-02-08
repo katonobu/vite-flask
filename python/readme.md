@@ -49,6 +49,10 @@
     - webbrowserのopen()でブラウザを開く。
     - socket.run()の引数のhost,portと整合させるために変数追加
 
+## BluePrintによるモジュール分割
+- [はじめてのFlask導入〜Blueprint適用](https://qiita.com/shimajiri/items/fb7d1d58de0b0d171c88)
+
+
 # 未解決
 ## 起動時のメッセージ削除
 `WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.`
