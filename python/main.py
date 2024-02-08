@@ -40,6 +40,7 @@ import sys
 import os
 import mimetypes
 import json
+import webbrowser
 from flask import Flask, send_from_directory
 from flask_socketio import SocketIO, send, emit
 from engineio.async_drivers import threading # pyinstaller対策
@@ -120,6 +121,7 @@ def get_port(port):
 
 if __name__ =="__main__":
     try:
+        webbrowser.open("http://localhost:5001/", new=2, autoraise=True)
         sio.run(app, host="0.0.0.0", port=5001)
     except Exception as e:
         print(e)
