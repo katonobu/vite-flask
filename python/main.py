@@ -51,12 +51,12 @@ def send_js(path):
 # Serial port REST-API
 @app.route("/ports", methods=['GET'])
 def get_ports():
-    ports = [port.device for port in list_ports.comports()]
+    ports = [port.name for port in list_ports.comports()]
     return json.dumps(ports, indent=2)
 
 @app.route("/ports/<string:port>", methods=['GET'])
 def get_port(port):
-    selected_ports = [com_port for com_port in list_ports.comports() if com_port.device.lower() == port.lower()]
+    selected_ports = [com_port for com_port in list_ports.comports() if com_port.name.lower() == port.lower()]
     ret_obj = {
         "device":None,
         "name": None,
