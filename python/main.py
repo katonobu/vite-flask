@@ -39,9 +39,11 @@ import time
 import sys
 import os
 import mimetypes
+import json
 from flask import Flask, send_from_directory
 from flask_socketio import SocketIO, send, emit
 from engineio.async_drivers import threading # pyinstaller対策
+from serial.tools import list_ports
 
 # 起動時の警告メッセージ除去する方法のはずだが、、、
 # https://gist.github.com/jerblack/735b9953ba1ab6234abb43174210d356 
@@ -72,15 +74,11 @@ static_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "j
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     static_folder = os.path.abspath(os.path.join(sys._MEIPASS,"dist"))
 
-print(static_folder)
-#app = Flask(__name__)
 app = Flask(
     __name__,
     static_folder=static_folder, # Viteのbuild結果をstaticにサービスするための設定
     static_url_path=""    # Viteのbuild結果をstaticにサービスするための設定
 )
-
-print(app.static_folder)
 
 # MIME type of "text/plain" 対応。
 mimetypes.add_type("application/javascript", ".js")
@@ -106,6 +104,19 @@ def index():
 @app.route("/assets/<path:path>")
 def send_js(path):
     return send_from_directory(app.static_folder, "assets/"+path)
+
+@app.route("/ports", methods=['GET'])
+def get_ports():
+    ports = [port.device for port in list_ports.comports()]
+    return json.dumps(ports, indent=2)
+
+@app.route("/ports/<string:port>", methods=['GET'])
+def get_port(port):
+    selected_ports = [com_port for com_port in list_ports.comports() if com_port.device.lower() == port.lower()]
+    ret_obj = {}
+    if 1 == len(selected_ports):
+        ret_obj = vars(selected_ports[0])
+    return json.dumps(ret_obj, indent=2)
 
 if __name__ =="__main__":
     try:
