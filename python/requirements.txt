@@ -18,6 +18,7 @@ pefile==2023.2.7
 pycparser==2.21
 pyinstaller==6.3.0
 pyinstaller-hooks-contrib==2024.0
+pyserial==3.5
 python-engineio==4.9.0
 python-socketio==5.11.1
 pywin32-ctypes==0.2.2
