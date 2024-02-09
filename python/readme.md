@@ -52,6 +52,12 @@
 ## BluePrintによるモジュール分割
 - [はじめてのFlask導入〜Blueprint適用](https://qiita.com/shimajiri/items/fb7d1d58de0b0d171c88)
 
+## Websocket側はSocketIOのClass-Based Namespacesで分離。
+- [Flask-SocketIO Class-Based Namespaces](https://flask-socketio.readthedocs.io/en/latest/getting_started.html#class-based-namespaces)
+
+## ポート毎の独立した通信を想定してSocketIOのRoomを検討
+- https://bloom-t.co.jp/blog/article_9233/
+
 
 # 未解決
 ## 起動時のメッセージ削除

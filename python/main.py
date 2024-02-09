@@ -7,8 +7,9 @@ import webbrowser
 from flask import Flask
 from flask_socketio import SocketIO, emit
 from engineio.async_drivers import threading # to avoid runtime error in .exe
-from api import serial
-from static import static
+from app import serial
+from app import static
+from app import ws
 
 app = Flask(__name__)
 app.register_blueprint(serial.app)
@@ -20,12 +21,8 @@ socket = SocketIO(
     async_mode="threading"  # to avoid runtime error in .exe
 )
 
-@socket.on("ping")  # callback if ping event is arrived
-def ping(data):
-    print(data)
-    print(time.time())
-    emit("pong", str(time.time()))
- 
+socket.on_namespace(ws.MyCustomNamespace('/'))
+
 if __name__ =="__main__":
     protocol = "http"
     url = "localhost"
