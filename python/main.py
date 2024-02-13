@@ -21,7 +21,7 @@ socket = SocketIO(
     async_mode="threading"  # to avoid runtime error in .exe
 )
 
-socket.on_namespace(ws.MyCustomNamespace('/'))
+socket.on_namespace(ws.SerialTransactionNamespace('/serialtransaction'))
 
 if __name__ =="__main__":
     protocol = "http"
