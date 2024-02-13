@@ -1,0 +1,19 @@
+<!--JSのSocket.IOクライアントを読み込む-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+<script type="text/javascript" charset="utf-8">
+    var socket = io("http://localhost:5001/serialtransaction");
+    function ping(){
+        t = new Date();
+        socket.emit('ping', {data: t.getTime()});  // サーバにpingイベントを投げつける
+        document.getElementById("log").innerHTML += ('ping: ' + t.getTime() + "<br>");
+    }
+    socket.on('connect', function() { // 初期化時に呼ばれるコールバック
+        socket.on('pong', (msg) => { // pongが帰ってきたら呼ばれるコールバック
+            t = new Date();
+            document.getElementById("log").innerHTML += ('pong: ' + t.getTime() + "<br>");
+        });
+        //ping();
+    });
+</script>
+<button type="button" onclick="ping();"> Ping </button>
+<div id="log"></div>
