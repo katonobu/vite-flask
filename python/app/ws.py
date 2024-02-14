@@ -94,6 +94,20 @@ class SerialTransactionNamespace(Namespace):
             emit('send_data_response', {'data': {'room':message['room'],'tx_data':message['tx_data']}})
             emit('tx_data_notify', {'data': {'room':message['room'],'tx_data':message['tx_data'],'from':request.sid}}, room=message['room'], skip_sid=request.sid)
 
+    def on_set_rts_port(self, message):
+        target_port = message['room']
+        if target_port in SerialTransactionNamespace.serial_obj:
+            port_obj = SerialTransactionNamespace.serial_obj.get(target_port)
+            port_obj['serial'].rts = message['requestToSend']
+            emit('set_rts_response', {'data': {'room':message['room'],'rts':port_obj['serial'].rts,'from':request.sid}})
+
+    def on_set_dtr_port(self, message):
+        target_port = message['room']
+        if target_port in SerialTransactionNamespace.serial_obj:
+            port_obj = SerialTransactionNamespace.serial_obj.get(target_port)
+            port_obj['serial'].dtr = message['dataTerminalReady']
+            emit('set_dtr_response', {'data': {'room':message['room'],'dtr':port_obj['serial'].dtr,'from':request.sid}})
+
     def on_disconnect_request(self, _):
         emit('disconnect_response', {'data': {'msg':'Disconnected!'}}, callback=lambda:disconnect())
 
