@@ -29,9 +29,7 @@
 <body>
 <div class="options">
   <label for="ports">Port:</label>
-  <select id="ports">
-    <option value="prompt">Click 'Connect' to add a port...</option>
-  </select>
+  <select id="ports"></select>
   <button id="connect">Connect</button>
 
   <button id="download">Download output</button>
@@ -81,15 +79,11 @@
 
   <input id="echo" type="checkbox">
   <label class="checkbox" for="echo">Local echo</label>
-  <input id="enter_flush" type="checkbox">
-  <label class="checkbox" for="enter_flush">Flush on enter</label>
   <input id="convert_eol" type="checkbox">
   <label class="checkbox" for="convert_eol">Convert EOL</label>
-  <input id="autoconnect" type="checkbox">
-  <label class="checkbox" for="autoconnect">Automatically connect</label>
 
   <div class="info">
-    <a href="https://github.com/GoogleChromeLabs/serial-terminal">Source Code on GitHub</a>
+    <a href="https://github.com/GoogleChromeLabs/serial-terminal">Original Source Code on GitHub</a>
   </div>
 </div>
 <div id="terminal"></div>
