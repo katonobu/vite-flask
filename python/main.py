@@ -1,24 +1,22 @@
-# このドキュメントをベースに進化させる。
-# Flask-SocketIO
-#  https://flask-socketio.readthedocs.io/en/latest/index.html
-
 import logging
 import webbrowser
 from flask import Flask
+from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 from engineio.async_drivers import threading # to avoid runtime error in .exe
 from app import serial
 from app import static
 from app import ws
 
+logging.basicConfig(level=logging.INFO)
+
 app = Flask(__name__)
 app.register_blueprint(serial.app)
 app.register_blueprint(static.app)
-logging.basicConfig(level=logging.INFO)
-
+CORS(app, resources={r'/ports/*': {'origins': ['http://localhost:5173','http://localhost:5001'] }})
 socket = SocketIO(
     app,
-#    cors_allowed_origins="*",
+    cors_allowed_origins=['http://localhost:5173', 'http://localhost:5001'],
     async_mode="threading"  # to avoid runtime error in .exe
 )
 namespace = '/serialtransaction'
