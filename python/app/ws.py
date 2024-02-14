@@ -3,8 +3,7 @@ import sys
 import serial
 import logging
 from flask import request
-from flask_socketio import Namespace, emit, join_room, leave_room, \
-    close_room, rooms, disconnect
+from flask_socketio import Namespace, emit, join_room, leave_room, rooms, disconnect
 from serial.threaded import ReaderThread,LineReader
 from serial.tools import list_ports
 
@@ -89,11 +88,6 @@ class SerialTransactionNamespace(Namespace):
 
     def on_disconnect_request(self, _):
         emit('disconnect_response', {'data': {'msg':'Disconnected!'}}, callback=lambda:disconnect())
-
-    def on_ping(self, data):
-        logger.info(data)
-        logger.info(time.time())
-        emit("pong", str(time.time()))
 
     def on_connect(self):
         logger.info(f'Client connected:{request.sid}')
