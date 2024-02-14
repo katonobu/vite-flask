@@ -1,30 +1,36 @@
-# React + TypeScript + Vite
+# Serial Terminal
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This repository contains a Progressive Web App that allows the user to
+communicate with a locally connected serial device through an interactive
+terminal. This provides a demonstration of the [Serial
+API](https://wicg.github.io/serial/).
 
-Currently, two official plugins are available:
+This API is available starting with Chrome 89, Edge 89, and Opera 76.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Privacy
 
-## Expanding the ESLint configuration
+This application is served statically and is cached for offline use. No
+analytics are collected. All communication with the serial device happens
+locally.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Building
 
-- Configure the top-level `parserOptions` property like this:
+This project is written in TypeScript and uses npm and Vite to manage
+dependencies and automate the build process. To get started clone the
+repository and install dependencies by running,
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```sh
+npm install
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+To create a production build in the `dist` folder run,
+
+```sh
+npm run build
+```
+
+To start a local development server run,
+
+```sh
+npm run dev
+```
