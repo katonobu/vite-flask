@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@types/w3c-web-serial": "^1.0.3",
+    "axios": "^1.6.7",
+    "socket.io-client": "^4.7.4",
     "web-serial-polyfill": "^1.0.14",
     "xterm": "^5.2.1",
     "xterm-addon-fit": "^0.7.0",
