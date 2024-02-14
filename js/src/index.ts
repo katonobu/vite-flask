@@ -300,13 +300,16 @@ async function connectToPort(): Promise<void> {
             connectButton.disabled = false;
             resolve(true);
           } else {
+            if (data.data.Error) {
+              console.error(data.data.Error);
+            }
             markDisconnected();
             resolve(false);
           }
         });
         socket.emit('join', {room: port, client: socket.id});
       } else {
-        resolve(false)
+        resolve(false);
       }
     });
   } else {
