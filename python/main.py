@@ -2,7 +2,7 @@
 # Flask-SocketIO
 #  https://flask-socketio.readthedocs.io/en/latest/index.html
 
-import time
+import logging
 import webbrowser
 from flask import Flask
 from flask_socketio import SocketIO, emit
@@ -14,14 +14,16 @@ from app import ws
 app = Flask(__name__)
 app.register_blueprint(serial.app)
 app.register_blueprint(static.app)
+logging.basicConfig(level=logging.INFO)
 
 socket = SocketIO(
     app,
 #    cors_allowed_origins="*",
     async_mode="threading"  # to avoid runtime error in .exe
 )
-
-socket.on_namespace(ws.SerialTransactionNamespace('/serialtransaction'))
+namespace = '/serialtransaction'
+serialTransactionNamespace = ws.SerialTransactionNamespace(namespace, socket)
+socket.on_namespace(serialTransactionNamespace)
 
 if __name__ =="__main__":
     protocol = "http"
