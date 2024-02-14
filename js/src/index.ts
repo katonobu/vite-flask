@@ -298,13 +298,15 @@ async function connectToPort(): Promise<void> {
             term.writeln('<CONNECTED>');
             connectButton.textContent = 'Disconnect';
             connectButton.disabled = false;
-            resolve(port);
+            resolve(true);
           } else {
             markDisconnected();
-            resolve(null);
+            resolve(false);
           }
         });
         socket.emit('join', {room: port, client: socket.id});
+      } else {
+        resolve(false)
       }
     });
   } else {
