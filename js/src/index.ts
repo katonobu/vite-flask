@@ -17,17 +17,92 @@
 import {Terminal} from 'xterm';
 import {FitAddon} from 'xterm-addon-fit';
 import {WebLinksAddon} from 'xterm-addon-web-links';
+import axios, {AxiosResponse, AxiosError} from 'axios';
+import {io, Socket} from 'socket.io-client';
 import 'xterm/css/xterm.css';
-import {
-  serial as polyfill, SerialPort as SerialPortPolyfill,
-} from 'web-serial-polyfill';
+
+interface RxDataNotifyPayload {
+  'data': {
+    'room': string;
+    'rx_data': string;
+  };
+}
+
+interface TxDataNotifyPayload {
+  'data': {
+    'room':string;
+    'tx_data':string;
+    'from':string;
+  };
+}
+interface ServerToClientEvents {
+  join_response: (data:any) => void;
+  rx_data_notify: (data:RxDataNotifyPayload) => void;
+  tx_data_notify: (data:TxDataNotifyPayload) => void;
+}
+
+interface JoinRequestPayload {
+  'room':string;
+  'client':string;
+}
+
+interface LeaveRequestPayload {
+  'room':string;
+}
+
+interface SendDataRequestPayload {
+  'room':string;
+  'tx_data':string;
+}
+
+/*
+interface GetPortStatusResponse {
+  'name':string;
+  'is_open':boolean;
+  'baudrate':number;
+  'bytesize':number;
+  'parity':string;
+  'stopbits':number;
+  'timeout':number | undefined;
+  'write_timeout':number | undefined;
+  'inter_byte_timeout':number | undefined;
+  'xonxoff':boolean;
+  'rtscts':boolean;
+  'dsrdtr':boolean;
+  'rts':boolean;
+  'dtr':boolean;
+  'cts':boolean | undefined;
+  'dts':boolean | undefined;
+  'ri':boolean | undefined;
+  'cd':boolean | undefined;
+}
+*/
+
+interface GetPortResponse {
+  'device':string;
+  'name': string;
+  'description': string | undefined;
+  'hwid': string | undefined;
+  'vid': number | undefined;
+  'pid': number | undefined;
+  'serial_number': string | undefined;
+  'location': string | undefined;
+  'manufacturer': string | undefined;
+  'product': string | undefined;
+  'interface': string | undefined;
+}
+interface ClientToServerEvents {
+  join: (arg0:JoinRequestPayload) => void;
+  leave: (arg0:LeaveRequestPayload) => void;
+  send_data: (arg0:SendDataRequestPayload) => void;
+}
 
 /**
  * Elements of the port selection dropdown extend HTMLOptionElement so that
  * they can reference the SerialPort they represent.
  */
 declare class PortOption extends HTMLOptionElement {
-  port: SerialPort | SerialPortPolyfill;
+  port: string;
 }
 
 let portSelector: HTMLSelectElement;
@@ -39,15 +114,11 @@ let paritySelector: HTMLSelectElement;
 let stopBitsSelector: HTMLSelectElement;
 let flowControlCheckbox: HTMLInputElement;
 let echoCheckbox: HTMLInputElement;
-let flushOnEnterCheckbox: HTMLInputElement;
-let autoconnectCheckbox: HTMLInputElement;
 
-let portCounter = 1;
-let port: SerialPort | SerialPortPolyfill | undefined;
-let reader: ReadableStreamDefaultReader | ReadableStreamBYOBReader | undefined;
+let socket: Socket<ServerToClientEvents, ClientToServerEvents>;
 
-const urlParams = new URLSearchParams(window.location.search);
-const usePolyfill = urlParams.has('polyfill');
+let port: string | undefined;
+
 const bufferSize = 8 * 1024; // 8kB
 
 const term = new Terminal({
@@ -59,56 +130,24 @@ term.loadAddon(fitAddon);
 
 term.loadAddon(new WebLinksAddon());
 
-const encoder = new TextEncoder();
 let toFlush = '';
 term.onData((data) => {
-  if (echoCheckbox.checked) {
-    term.write(data);
-  }
-
-  if (port?.writable == null) {
-    console.warn(`unable to find writable port`);
-    return;
-  }
-
-  const writer = port.writable.getWriter();
-
-  if (flushOnEnterCheckbox.checked) {
-    toFlush += data;
+  if (port) {
+    if (echoCheckbox.checked) {
+      term.write(data);
+      if (data === '\r') {
+        term.writeln('');
+      }
+    }
     if (data === '\r') {
-      writer.write(encoder.encode(toFlush));
-      writer.releaseLock();
+      // const txData = encoder.encode(toFlush);
+      socket.emit('send_data', {room: port, tx_data: toFlush});
       toFlush = '';
+    } else {
+      toFlush += data;
     }
-  } else {
-    writer.write(encoder.encode(data));
   }
-
-  writer.releaseLock();
 });
-
-/**
- * Returns the option corresponding to the given SerialPort if one is present
- * in the selection dropdown.
- *
- * @param {SerialPort} port the port to find
- * @return {PortOption}
- */
-function findPortOption(port: SerialPort | SerialPortPolyfill):
-    PortOption | null {
-  for (let i = 0; i < portSelector.options.length; ++i) {
-    const option = portSelector.options[i];
-    if (option.value === 'prompt') {
-      continue;
-    }
-    const portOption = option as PortOption;
-    if (portOption.port === port) {
-      return portOption;
-    }
-  }
-
-  return null;
-}
 
 /**
  * Adds the given port to the selection dropdown.
@@ -116,28 +155,12 @@ function findPortOption(port: SerialPort | SerialPortPolyfill):
  * @param {SerialPort} port the port to add
  * @return {PortOption}
  */
-function addNewPort(port: SerialPort | SerialPortPolyfill): PortOption {
+function addNewPort(port: GetPortResponse): PortOption {
   const portOption = document.createElement('option') as PortOption;
-  portOption.textContent = `Port ${portCounter++}`;
-  portOption.port = port;
+  portOption.textContent = `${port.name} : ${port.description}`;
+  portOption.port = port.device;
   portSelector.appendChild(portOption);
   return portOption;
-}
-
-/**
- * Adds the given port to the selection dropdown, or returns the existing
- * option if one already exists.
- *
- * @param {SerialPort} port the port to add
- * @return {PortOption}
- */
-function maybeAddNewPort(port: SerialPort | SerialPortPolyfill): PortOption {
-  const portOption = findPortOption(port);
-  if (portOption) {
-    return portOption;
-  }
-
-  return addNewPort(port);
 }
 
 /**
@@ -186,19 +209,8 @@ function clearTerminalContents(): void {
  * user is prompted for one.
  */
 async function getSelectedPort(): Promise<void> {
-  if (portSelector.value == 'prompt') {
-    try {
-      const serial = usePolyfill ? polyfill : navigator.serial;
-      port = await serial.requestPort({});
-    } catch (e) {
-      return;
-    }
-    const portOption = maybeAddNewPort(port);
-    portOption.selected = true;
-  } else {
-    const selectedOption = portSelector.selectedOptions[0] as PortOption;
-    port = selectedOption.port;
-  }
+  const selectedOption = portSelector.selectedOptions[0] as PortOption;
+  port = selectedOption.port;
 }
 
 /**
@@ -252,6 +264,7 @@ async function connectToPort(): Promise<void> {
     stopbits: Number.parseInt(stopBitsSelector.value),
     rtscts: flowControlCheckbox.checked,
   };
+  console.log(port);
   console.log(options);
 
   portSelector.disabled = true;
@@ -264,78 +277,37 @@ async function connectToPort(): Promise<void> {
   stopBitsSelector.disabled = true;
   flowControlCheckbox.disabled = true;
 
-  try {
-    await port.open(options);
-    term.writeln('<CONNECTED>');
-    connectButton.textContent = 'Disconnect';
-    connectButton.disabled = false;
-  } catch (e) {
-    console.error(e);
-    if (e instanceof Error) {
-      term.writeln(`<ERROR: ${e.message}>`);
-    }
-    markDisconnected();
-    return;
-  }
-
-  while (port && port.readable) {
-    try {
-      try {
-        reader = port.readable.getReader({mode: 'byob'});
-      } catch {
-        reader = port.readable.getReader();
-      }
-
-      let buffer = null;
-      for (;;) {
-        const {value, done} = await (async () => {
-          if (reader instanceof ReadableStreamBYOBReader) {
-            if (!buffer) {
-              buffer = new ArrayBuffer(bufferSize);
-            }
-            const {value, done} =
-                await reader.read(new Uint8Array(buffer, 0, bufferSize));
-            buffer = value?.buffer;
-            return {value, done};
+  if (socket.id) {
+    await new Promise((resolve) => {
+      if (port && socket.id) {
+        socket.on('join_response', (data:any) => {
+          socket.off('join_response');
+          // console.log(data.data.rooms);
+          const filteredRooms = data.data.rooms.filter((r:string)=>r === port);
+          if (filteredRooms.length === 1) {
+            socket.on('rx_data_notify', (data:RxDataNotifyPayload) => {
+              (new Promise<void>((resolve) => {
+                term.writeln(data.data.rx_data, resolve);
+              }));
+            });
+            socket.on('tx_data_notify', (data:TxDataNotifyPayload) => {
+              (new Promise<void>((resolve) => {
+                term.writeln(data.data.tx_data, resolve);
+              }));
+            });
+            term.writeln('<CONNECTED>');
+            connectButton.textContent = 'Disconnect';
+            connectButton.disabled = false;
+            resolve(port);
           } else {
-            return await reader.read();
+            markDisconnected();
+            resolve(null);
           }
-        })();
-
-        if (value) {
-          await new Promise<void>((resolve) => {
-            term.write(value, resolve);
-          });
-        }
-        if (done) {
-          break;
-        }
+        });
+        socket.emit('join', {room: port, client: socket.id});
       }
-    } catch (e) {
-      console.error(e);
-      await new Promise<void>((resolve) => {
-        if (e instanceof Error) {
-          term.writeln(`<ERROR: ${e.message}>`, resolve);
-        }
-      });
-    } finally {
-      if (reader) {
-        reader.releaseLock();
-        reader = undefined;
-      }
-    }
-  }
-
-  if (port) {
-    try {
-      await port.close();
-    } catch (e) {
-      console.error(e);
-      if (e instanceof Error) {
-        term.writeln(`<ERROR: ${e.message}>`);
-      }
-    }
-
+    });
+  } else {
     markDisconnected();
   }
 }
@@ -344,27 +316,12 @@ async function connectToPort(): Promise<void> {
  * Closes the currently active connection.
  */
 async function disconnectFromPort(): Promise<void> {
-  // Move |port| into a local variable so that connectToPort() doesn't try to
-  // close it on exit.
-  const localPort = port;
-  port = undefined;
-
-  if (reader) {
-    await reader.cancel();
+  if (port) {
+    socket.emit('leave', {room: port});
+    socket.off('rx_data_notify');
+    socket.off('tx_data_notify');
+    markDisconnected();
   }
-
-  if (localPort) {
-    try {
-      await localPort.close();
-    } catch (e) {
-      console.error(e);
-      if (e instanceof Error) {
-        term.writeln(`<ERROR: ${e.message}>`);
-      }
-    }
-  }
-
-  markDisconnected();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -412,10 +369,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   stopBitsSelector = document.getElementById('stopbits') as HTMLSelectElement;
   flowControlCheckbox = document.getElementById('rtscts') as HTMLInputElement;
   echoCheckbox = document.getElementById('echo') as HTMLInputElement;
-  flushOnEnterCheckbox =
-      document.getElementById('enter_flush') as HTMLInputElement;
-  autoconnectCheckbox =
-      document.getElementById('autoconnect') as HTMLInputElement;
 
   const convertEolCheckbox =
       document.getElementById('convert_eol') as HTMLInputElement;
@@ -425,35 +378,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   convertEolCheckbox.addEventListener('change', convertEolCheckboxHandler);
   convertEolCheckboxHandler();
 
-  const polyfillSwitcher =
-      document.getElementById('polyfill_switcher') as HTMLAnchorElement;
-  if (usePolyfill) {
-    polyfillSwitcher.href = './';
-    polyfillSwitcher.textContent = 'Switch to native API';
-  } else {
-    polyfillSwitcher.href = './?polyfill';
-    polyfillSwitcher.textContent = 'Switch to API polyfill';
+  let portNumber = 5001;
+  if (import.meta.env.MODE == 'development') {
+    portNumber = 5001;
   }
 
-  const serial = usePolyfill ? polyfill : navigator.serial;
-  const ports: (SerialPort | SerialPortPolyfill)[] = await serial.getPorts();
-  ports.forEach((port) => addNewPort(port));
+  axios.get(`http://localhost:${portNumber}/ports`)
+      .then((response:AxiosResponse)=>{
+        Promise.all(response.data.map((port:string)=>axios.get(`http://localhost:${portNumber}/ports/${port}`)))
+            .then((rsps:AxiosResponse[])=>{
+              rsps.forEach((rsp) => addNewPort(rsp.data));
+            })
+            .catch((e: AxiosError<{ error: string }>)=>{
+              console.log(e.message);
+            });
+      })
+      .catch((e: AxiosError<{ error: string }>)=>{
+        console.log(e.message);
+      });
 
-  // These events are not supported by the polyfill.
-  // https://github.com/google/web-serial-polyfill/issues/20
-  if (!usePolyfill) {
-    navigator.serial.addEventListener('connect', (event) => {
-      const portOption = addNewPort(event.target as SerialPort);
-      if (autoconnectCheckbox.checked) {
-        portOption.selected = true;
-        connectToPort();
-      }
+  try {
+    socket = io(`http://localhost:${portNumber}/serialtransaction`, {
+      reconnectionDelayMax: 10000,
     });
-    navigator.serial.addEventListener('disconnect', (event) => {
-      const portOption = findPortOption(event.target as SerialPort);
-      if (portOption) {
-        portOption.remove();
-      }
-    });
+  } catch (e) {
+    console.error(e);
   }
 });
