@@ -37,6 +37,7 @@ class SerialTransactionNamespace(Namespace):
         self.socket = socket
         self.namespace = namespace
     def on_join(self, message):
+        rsp_obj = {'rooms':[], 'user_num':-1}
         port = message['room']
         selected_ports = [com_port for com_port in list_ports.comports() if com_port.name.lower() == port.lower()]
         if 1 == len(selected_ports):
@@ -54,15 +55,22 @@ class SerialTransactionNamespace(Namespace):
                     SerialTransactionNamespace.serial_obj.update({target_port:{'serial':ser, 'protocol':protocol, 'thread':t, 'used_count':0}})
                     logger.info(f"open port {target_port}")
                 except serial.SerialException as e:
+                    logger.info(e)
                     pass
             if target_port in SerialTransactionNamespace.serial_obj:
                 current_used_count = SerialTransactionNamespace.serial_obj.get(target_port).get('used_count')
                 SerialTransactionNamespace.serial_obj.get(target_port).update({'used_count':current_used_count+1})
                 join_room(target_port)
                 logger.info(f"Joined {request.sid} to {target_port}")
-        emit('join_response', {'data': {'rooms':rooms(),'user_num':SerialTransactionNamespace.serial_obj.get(target_port).get('used_count')}})
+                rsp_obj.update({'rooms':rooms(),'user_num':SerialTransactionNamespace.serial_obj.get(target_port).get('used_count')})
+            else:
+                rsp_obj.update({'rooms':rooms()})
+        else:
+            rsp_obj.update({'rooms':rooms()})
+        emit('join_response', {'data': rsp_obj})
 
     def on_leave(self, message):
+        current_used_count = 0
         target_port = message['room']
         if target_port in SerialTransactionNamespace.serial_obj:
             port_obj = SerialTransactionNamespace.serial_obj.get(target_port)
