@@ -14,6 +14,7 @@ app = Flask(__name__)
 app.register_blueprint(serial.app)
 app.register_blueprint(static.app)
 CORS(app, resources={r'/ports/*': {'origins': [
+    'http://localhost:3000',
     'http://localhost:5001',
     'http://localhost:5173',
     'http://localhost:5174',
@@ -22,6 +23,7 @@ CORS(app, resources={r'/ports/*': {'origins': [
 socket = SocketIO(
     app,
     cors_allowed_origins=[
+        'http://localhost:3000',
         'http://localhost:5001',
         'http://localhost:5173',
         'http://localhost:5174',
