@@ -43,8 +43,12 @@ class SerialTransactionNamespace(Namespace):
         if 1 == len(selected_ports):
             target_port = selected_ports[0].name
             if (target_port in SerialTransactionNamespace.serial_obj) is False:
+                # connect to serial port
+                ser = serial.serial_for_url(target_port, do_not_open=True)
+                ser.baudrate = message.get('baudRate',115200)
+                ser.rtscts   = message.get('flowControl',None) == 'hardware'
                 try:
-                    ser = serial.serial_for_url(target_port, baudrate=115200)
+                    ser.open()
                     t = ReaderThread(ser, PrintLines)
                     t.start()
                     _, protocol = t.connect()
@@ -56,7 +60,7 @@ class SerialTransactionNamespace(Namespace):
                     logger.info(f"open port {target_port}")
                 except serial.SerialException as e:
                     logger.info(e)
-                    pass
+                    rsp_obj.update({'rooms':rooms(),'Error':str(e)})
             if target_port in SerialTransactionNamespace.serial_obj:
                 current_used_count = SerialTransactionNamespace.serial_obj.get(target_port).get('used_count')
                 SerialTransactionNamespace.serial_obj.get(target_port).update({'used_count':current_used_count+1})
@@ -64,9 +68,9 @@ class SerialTransactionNamespace(Namespace):
                 logger.info(f"Joined {request.sid} to {target_port}")
                 rsp_obj.update({'rooms':rooms(),'user_num':SerialTransactionNamespace.serial_obj.get(target_port).get('used_count')})
             else:
-                rsp_obj.update({'rooms':rooms()})
+                rsp_obj.update({'rooms':rooms(),'Error':'Unexpected error in open'})
         else:
-            rsp_obj.update({'rooms':rooms()})
+            rsp_obj.update({'rooms':rooms(),'Error':f'Specified port "{port}" is not available'})
         emit('join_response', {'data': rsp_obj})
 
     def on_leave(self, message):
