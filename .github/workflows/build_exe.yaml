@@ -28,3 +28,14 @@ jobs:
           python --version
           python -m pip install --upgrade pip
           node --version
+
+      - name: setup
+        shell: powershell
+        run: |
+          Start-Process 00_setup.bat
+
+      - name: build
+        shell: powershell
+        run: |
+          cd python
+          Start-Process 99_build_exe.bat
