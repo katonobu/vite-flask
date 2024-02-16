@@ -32,11 +32,12 @@ jobs:
       - name: setup
         shell: powershell
         run: |
-          cd
+          Get-Lacation
           Start-Process 00_setup.bat
 
       - name: build
         shell: powershell
         run: |
           cd python
+          Get-Lacation
           Start-Process 99_build_exe.bat
