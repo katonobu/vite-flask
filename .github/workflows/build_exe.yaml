@@ -28,6 +28,7 @@ jobs:
           python --version
           python -m pip install --upgrade pip
           node --version
+          npm --version
 
       - name: setup
         shell: cmd
@@ -35,8 +36,8 @@ jobs:
           git clone https://github.com/katonobu/vite-flask
           cd vite-flask
           cd js
-          node install
-          node run build
+          npm install
+          npm run build
           cd ..
           cd python
           pyinstaller main.py --onefile --add-data "..\js\dist:dist" --distpath exe
