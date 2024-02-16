@@ -36,8 +36,8 @@ jobs:
           git clone https://github.com/katonobu/vite-flask
           cd vite-flask
           cd js
-          npm install
-          npm run build
+          call npm install
+          call npm run build
           cd ..
           cd python
           pip install -r requirements.txt
