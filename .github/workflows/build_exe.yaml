@@ -32,12 +32,14 @@ jobs:
       - name: setup
         shell: powershell
         run: |
-          Get-Lacation
-          Start-Process 00_setup.bat
+          https://github.com/katonobu/vite-flask.git
+          cd vite-flask
+          cd js
+          node install
+          node run build
 
       - name: build
         shell: powershell
         run: |
           cd python
-          Get-Lacation
-          Start-Process 99_build_exe.bat
+          pyinstaller main.py --onefile --add-data "..\js\dist:dist" --distpath exe
