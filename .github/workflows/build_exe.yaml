@@ -43,20 +43,6 @@ jobs:
       - name: build
         shell: cmd
         run: |
-          git config --global core.autoCRLF false
-          git clone https://github.com/katonobu/vite-flask
-          cd vite-flask
-          cd js
-          call npm install
-          call npm run build
-          cd ..
-          cd python
-          pip install -r requirements.txt
-          pyinstaller main.py --onefile --add-data "..\js\dist:dist" --distpath exe
-
-      - name: build2
-        shell: cmd
-        run: |
           dir
           cd js
           call npm install
@@ -70,4 +56,4 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: build-result
-          path: ./vite-flask/python/exe/
+          path: ./python/exe/
