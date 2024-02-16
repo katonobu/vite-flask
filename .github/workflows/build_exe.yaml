@@ -33,6 +33,7 @@ jobs:
       - name: setup
         shell: cmd
         run: |
+          git config --global core.autoCRLF false
           git clone https://github.com/katonobu/vite-flask
           cd vite-flask
           cd js
