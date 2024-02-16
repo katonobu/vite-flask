@@ -48,4 +48,4 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: build-result
-          path: ./python/exe
+          path: ./python/exe/
