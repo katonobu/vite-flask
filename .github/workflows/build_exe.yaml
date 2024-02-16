@@ -16,6 +16,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Set up Python 
         uses: actions/setup-python@v4
         with:
@@ -28,9 +33,8 @@ jobs:
           python --version
           python -m pip install --upgrade pip
           node --version
-          npm --version
 
-      - name: setup
+      - name: build
         shell: cmd
         run: |
           git config --global core.autoCRLF false
@@ -43,6 +47,12 @@ jobs:
           cd python
           pip install -r requirements.txt
           pyinstaller main.py --onefile --add-data "..\js\dist:dist" --distpath exe
+
+      - name: build2
+        shell: cmd
+        run: |
+          cd 
+          cd ..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v1
