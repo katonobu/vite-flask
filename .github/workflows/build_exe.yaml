@@ -41,3 +41,9 @@ jobs:
           cd ..
           cd python
           pyinstaller main.py --onefile --add-data "..\js\dist:dist" --distpath exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: build-result
+          path: ./exe
