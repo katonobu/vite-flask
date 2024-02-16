@@ -25,30 +25,25 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: 20
 
       - name: Set up Python 
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
-          node-version: "20"
 
-      - name: Install dependencies
-        shell: powershell
-        run: |
-          git --version
-          python --version
-          python -m pip install --upgrade pip
-          node --version
-
-      - name: build
+      - name: build node
         shell: cmd
         run: |
           cd js
           call npm install
           call npm run build
-          cd ..
+
+      - name: build exe
+        shell: cmd
+        run: |
           cd python
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
           pyinstaller main.py --onefile --add-data "..\js\dist:dist" --distpath exe          
 
