@@ -13,6 +13,14 @@ jobs:
     runs-on: windows-latest
     
     steps:
+      - name: Set No autoCRLF
+        shell: cmd
+        run: |
+          git --version
+          git config list
+          git config --global core.autoCRLF false
+          git config list
+  
       - name: Checkout
         uses: actions/checkout@v4
 
