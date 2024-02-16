@@ -32,14 +32,11 @@ jobs:
       - name: setup
         shell: powershell
         run: |
-          https://github.com/katonobu/vite-flask.git
+          git clone https://github.com/katonobu/vite-flask.git
           cd vite-flask
           cd js
           node install
           node run build
-
-      - name: build
-        shell: powershell
-        run: |
+          cd ..
           cd python
           pyinstaller main.py --onefile --add-data "..\js\dist:dist" --distpath exe
