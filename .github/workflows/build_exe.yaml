@@ -51,7 +51,6 @@ jobs:
       - name: build2
         shell: cmd
         run: |
-          cd ..
           dir
           cd js
           call npm install
