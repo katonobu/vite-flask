@@ -32,6 +32,7 @@ jobs:
       - name: setup
         shell: powershell
         run: |
+          cd
           Start-Process 00_setup.bat
 
       - name: build
